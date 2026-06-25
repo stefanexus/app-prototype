@@ -1,14 +1,20 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { KeyboardEvent } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { alpha } from '@mui/material/styles';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import type { KeyboardEvent } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
 
-import Avatar from '../../components/avatar';
-import Iconify from '../../components/iconify';
-import { GRADIENTS, PALETTE } from '../../theme';
-import type { AvatarState } from '../../types';
+import Avatar from "../../components/avatar";
+import Iconify from "../../components/iconify";
+import { GRADIENTS, PALETTE } from "../../theme";
+import type { AvatarState } from "../../types";
 
 // ----------------------------------------------------------------------
 // Avatar presence — the hero of the Home screen. Tap the orb once (or say
@@ -53,21 +59,21 @@ const MotionBox = motion.create(Box);
 const COLLAPSED_LINES = 3;
 
 const CLAMP_SX = {
-  display: '-webkit-box',
+  display: "-webkit-box",
   WebkitLineClamp: COLLAPSED_LINES,
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
 } as const;
 
 // Shared balloon surface (collapsed, in-flow version).
 const BALLOON_SX = {
-  position: 'relative',
+  position: "relative",
   p: 1.5,
   borderRadius: 2.5,
   bgcolor: PALETTE.surfaceHi,
   border: `1px solid ${PALETTE.border}`,
   background: GRADIENTS.brandSoft,
-  backdropFilter: 'blur(6px)',
+  backdropFilter: "blur(6px)",
 } as const;
 
 export default function HomePresence({
@@ -84,27 +90,27 @@ export default function HomePresence({
 }: Props) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         onToggle();
       }
     },
-    [onToggle]
+    [onToggle],
   );
 
   const handleExpandKey = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         onToggleExpand();
       }
     },
-    [onToggleExpand]
+    [onToggleExpand],
   );
 
-  const listening = state === 'listening';
-  const thinking = state === 'thinking';
-  const speaking = state === 'speaking';
+  const listening = state === "listening";
+  const thinking = state === "thinking";
+  const speaking = state === "speaking";
   // Engaged in any way (listening, thinking or speaking): zoom in + pulse.
   const active = listening || thinking || speaking;
 
@@ -133,13 +139,13 @@ export default function HomePresence({
         return;
       }
       measure();
-      if (typeof ResizeObserver !== 'undefined') {
+      if (typeof ResizeObserver !== "undefined") {
         const ro = new ResizeObserver(() => measure());
         ro.observe(node);
         roRef.current = ro;
       }
     },
-    [measure]
+    [measure],
   );
 
   // Re-measure when the caption content changes…
@@ -155,25 +161,40 @@ export default function HomePresence({
 
   // Control hint under the orb — one line per state.
   const hint = speaking
-    ? { icon: 'solar:soundwave-bold-duotone', color: PALETTE.cyan, text: 'Tap to stop' }
+    ? {
+        icon: "solar:soundwave-bold-duotone",
+        color: PALETTE.cyan,
+        text: "Tap to stop",
+      }
     : thinking
-      ? { icon: 'solar:soundwave-bold-duotone', color: PALETTE.violetLight, text: 'Thinking…' }
+      ? {
+          icon: "solar:soundwave-bold-duotone",
+          color: PALETTE.violetLight,
+          text: "Thinking…",
+        }
       : listening
-        ? { icon: 'solar:microphone-bold-duotone', color: PALETTE.cyan, text: 'Listening… tap to reply' }
+        ? {
+            icon: "solar:microphone-bold-duotone",
+            color: PALETTE.cyan,
+            text: "Listening… tap to reply",
+          }
         : {
-            icon: 'solar:play-bold',
+            icon: "solar:play-bold",
             color: PALETTE.textSecondary,
-            text: wakeWord ? `Tap to talk — or say “${wakeWord}”` : 'Tap to talk',
+            text: wakeWord
+              ? `Tap to talk — or say “${wakeWord}”`
+              : "Tap to talk",
           };
 
   const ariaLabel = speaking
-    ? 'Stop speaking'
+    ? "Stop speaking"
     : listening
-      ? 'Listening — tap to reply'
-      : 'Tap to talk';
+      ? "Listening — tap to reply"
+      : "Tap to talk";
 
   // Which bubble variant is showing (drives the enter/exit transition).
-  const bubbleKey = speaking || thinking ? 'reply' : listening ? 'listening' : 'nudge';
+  const bubbleKey =
+    speaking || thinking ? "reply" : listening ? "listening" : "nudge";
 
   // The collapsed bubble is only interactive once there is hidden text to show.
   const canExpand = overflowing || expanded;
@@ -185,11 +206,11 @@ export default function HomePresence({
   const renderBody = (clamp: boolean) => {
     if (speaking || thinking) {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
           <Iconify
             icon="solar:soundwave-bold-duotone"
             width={20}
-            sx={{ color: PALETTE.violetLight, flexShrink: 0, mt: '2px' }}
+            sx={{ color: PALETTE.violetLight, flexShrink: 0, mt: "2px" }}
           />
           <Typography
             ref={clamp ? setTextRef : undefined}
@@ -201,39 +222,46 @@ export default function HomePresence({
               ...(clamp ? CLAMP_SX : {}),
             }}
           >
-            {thinking ? 'Thinking…' : spokenText}
+            {thinking ? "Thinking…" : spokenText}
           </Typography>
         </Box>
       );
     }
     if (listening) {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Iconify
             icon="solar:microphone-bold-duotone"
             width={20}
             sx={{ color: PALETTE.cyan, flexShrink: 0 }}
           />
-          <Typography variant="body2" sx={{ color: PALETTE.text, fontWeight: 600, lineHeight: 1.4 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: PALETTE.text, fontWeight: 600, lineHeight: 1.4 }}
+          >
             Listening…
           </Typography>
         </Box>
       );
     }
     return (
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
         <Box
           sx={{
             flexShrink: 0,
             width: 28,
             height: 28,
-            borderRadius: '50%',
-            display: 'grid',
-            placeItems: 'center',
+            borderRadius: "50%",
+            display: "grid",
+            placeItems: "center",
             bgcolor: alpha(PALETTE.violet, 0.18),
           }}
         >
-          <Iconify icon={nudge.icon} width={16} sx={{ color: PALETTE.violetLight }} />
+          <Iconify
+            icon={nudge.icon}
+            width={16}
+            sx={{ color: PALETTE.violetLight }}
+          />
         </Box>
         <Typography
           ref={clamp ? setTextRef : undefined}
@@ -250,24 +278,25 @@ export default function HomePresence({
     );
   };
 
-  // Little round chevron in the bubble's top-right corner — the expand cue.
-  const renderChevron = (up: boolean) => (
+  // Little round chevron in the bubble — the expand cue.
+  const renderChevron = (up: boolean, centerY = false) => (
     <Box
       aria-hidden
       sx={{
-        position: 'absolute',
-        top: 10,
+        position: "absolute",
+        top: centerY ? "50%" : 10,
         right: 10,
+        transform: centerY ? "translateY(-50%)" : undefined,
         width: 22,
         height: 22,
-        borderRadius: '50%',
-        display: 'grid',
-        placeItems: 'center',
+        borderRadius: "50%",
+        display: "grid",
+        placeItems: "center",
         bgcolor: alpha(PALETTE.violet, 0.18),
       }}
     >
       <Iconify
-        icon={up ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'}
+        icon={up ? "solar:alt-arrow-up-linear" : "solar:alt-arrow-down-linear"}
         width={14}
         sx={{ color: PALETTE.violetLight }}
       />
@@ -279,8 +308,8 @@ export default function HomePresence({
       variant="overline"
       sx={{
         color: PALETTE.violetLight,
-        letterSpacing: '0.08em',
-        display: 'block',
+        letterSpacing: "0.08em",
+        display: "block",
         lineHeight: 1.5,
       }}
     >
@@ -291,11 +320,11 @@ export default function HomePresence({
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         gap: 1.75,
-        width: '100%',
+        width: "100%",
       }}
     >
       {/* The avatar is the tap-to-talk control. A gentle pulse while it's
@@ -310,38 +339,41 @@ export default function HomePresence({
         animate={{ scale: active ? [1.3, 1.4, 1.3] : 1 }}
         transition={
           active
-            ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
-            : { duration: 0.3, ease: 'easeOut' }
+            ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" }
+            : { duration: 0.3, ease: "easeOut" }
         }
         sx={{
-          cursor: 'pointer',
-          outline: 'none',
-          display: 'grid',
-          placeItems: 'center',
-          borderRadius: '50%',
+          cursor: "pointer",
+          outline: "none",
+          display: "grid",
+          placeItems: "center",
+          borderRadius: "50%",
         }}
       >
         <Avatar size={orbSize} appearanceId={appearanceId} state={state} />
       </MotionBox>
 
       {/* control hint */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
         <Iconify icon={hint.icon} width={16} sx={{ color: hint.color }} />
-        <Typography variant="body2" sx={{ color: PALETTE.textSecondary, fontWeight: 600 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: PALETTE.textSecondary, fontWeight: 600 }}
+        >
           {hint.text}
         </Typography>
       </Box>
 
       {/* compact speech bubble — the avatar's voice */}
-      <Box sx={{ width: '100%', position: 'relative' }}>
+      <Box sx={{ width: "100%", position: "relative" }}>
         {/* little tail pointing up to the orb */}
         <Box
           aria-hidden
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: -6,
-            left: '50%',
-            transform: 'translateX(-50%) rotate(45deg)',
+            left: "50%",
+            transform: "translateX(-50%) rotate(45deg)",
             width: 12,
             height: 12,
             bgcolor: PALETTE.surfaceHi,
@@ -353,29 +385,30 @@ export default function HomePresence({
         {/* collapsed bubble — always in flow, so it reserves the layout height
             and the orb never jumps when the overlay opens. */}
         <Box
-          role={inFlowInteractive ? 'button' : undefined}
+          role={inFlowInteractive ? "button" : undefined}
           tabIndex={inFlowInteractive ? 0 : undefined}
           aria-expanded={inFlowInteractive ? false : undefined}
-          aria-label={inFlowInteractive ? 'Show full message' : undefined}
+          aria-label={inFlowInteractive ? "Show full message" : undefined}
           onClick={inFlowInteractive ? onToggleExpand : undefined}
           onKeyDown={inFlowInteractive ? handleExpandKey : undefined}
-          sx={{ ...BALLOON_SX, cursor: inFlowInteractive ? 'pointer' : 'default' }}
+          sx={{
+            ...BALLOON_SX,
+            cursor: inFlowInteractive ? "pointer" : "default",
+          }}
         >
-          {name}
-
           <AnimatePresence mode="wait">
             <MotionBox
               key={bubbleKey}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
               {renderBody(true)}
             </MotionBox>
           </AnimatePresence>
 
-          {inFlowInteractive && renderChevron(false)}
+          {inFlowInteractive && renderChevron(false, true)}
         </Box>
 
         {/* expanded overlay — floats out over the bottom group (which HomeView
@@ -393,24 +426,23 @@ export default function HomePresence({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               sx={{
                 ...BALLOON_SX,
-                position: 'absolute',
+                position: "absolute",
                 top: 0,
                 left: 0,
                 right: 0,
                 zIndex: 20,
-                cursor: 'pointer',
+                cursor: "pointer",
                 // opaque surface (gradient layered over solid) so the dimmed
                 // content below never bleeds through the long caption
                 background: `${GRADIENTS.brandSoft}, ${PALETTE.surfaceHi}`,
-                boxShadow: '0 20px 48px rgba(0,0,0,0.55)',
-                maxHeight: 'min(58vh, 420px)',
-                overflowY: 'auto',
+                boxShadow: "0 20px 48px rgba(0,0,0,0.55)",
+                maxHeight: "min(58vh, 420px)",
+                overflowY: "auto",
               }}
             >
-              {name}
               {renderBody(false)}
               {renderChevron(true)}
             </MotionBox>
