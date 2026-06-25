@@ -21,8 +21,8 @@ import type { AvatarState } from "../../types";
 // Avatar presence — the hero of the Home screen. Tap the orb once (or say
 // the wake word) and the avatar starts listening; tap again and it answers
 // aloud. Below it, a compact "speech bubble" carries the avatar's voice — a
-// proactive nudge when idle, a "Listening…" cue while listening, and a short
-// caption of the spoken reply while it talks.
+// proactive nudge before the first answer, a "Listening…" cue while listening,
+// and the latest spoken reply once the avatar has answered.
 //
 // The bubble shows the first 3 lines by default; when the text is longer it
 // becomes tap-to-expand and the full reply floats out as an overlay panel
@@ -115,6 +115,8 @@ export default function HomePresence({
   const listening = state === "listening";
   const thinking = state === "thinking";
   const speaking = state === "speaking";
+  const hasSpokenText = spokenText.trim().length > 0;
+  const showingReply = thinking || speaking || (hasSpokenText && !listening);
   // Engaged in any way (listening, thinking or speaking): zoom in + pulse.
   const active = listening || thinking || speaking;
   const wakeReady =
@@ -205,8 +207,7 @@ export default function HomePresence({
       : `Tap to talk to ${avatarName}`;
 
   // Which bubble variant is showing (drives the enter/exit transition).
-  const bubbleKey =
-    speaking || thinking ? "reply" : listening ? "listening" : "nudge";
+  const bubbleKey = showingReply ? "reply" : listening ? "listening" : "nudge";
 
   // The collapsed bubble is only interactive once there is hidden text to show.
   const canExpand = overflowing || expanded;
@@ -216,7 +217,7 @@ export default function HomePresence({
   // 3-line cap and attaches the measuring ref; the expanded overlay passes
   // false to show the whole thing.
   const renderBody = (clamp: boolean) => {
-    if (speaking || thinking) {
+    if (showingReply) {
       return (
         <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
           <Iconify

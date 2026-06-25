@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import type { AvatarState } from '../../types';
 import { DEFAULT_AVATAR, MOCK_NUDGES, SCRIPTED_REPLIES } from '../../_mock';
+import type { ReplyExplanation, ScriptedReply } from '../../_mock';
 import { useSpeech } from '../../hooks/use-speech';
 import { useWakeWord } from '../../hooks/use-wake-word';
 import { prefetchSpeech, unlockAudio } from '../../lib/speech';
@@ -15,9 +16,8 @@ import HomeQuickActions from './home-quick-actions';
 
 // ----------------------------------------------------------------------
 // Home dashboard (content only — AppLayout provides the MobileShell frame,
-// padding and the bottom navigation). The screen is built to fit the phone
-// height with NO scroll: the avatar hero centres in the flexible space and
-// the question chips + "Today at a glance" pin just above the nav.
+// padding and the bottom navigation). The screen scrolls when answer details
+// are present while the bottom navigation remains pinned by the shell.
 //
 // Conversation flow (PRD stories 4-7): the orb is the tap-to-talk control.
 //   idle ──tap / say "Nova"──▶ listening ──tap──▶ (thinking) ──▶ speaking
@@ -63,6 +63,7 @@ export default function HomeView() {
   // Which scripted reply the orb plays next (cycles through the list).
   const replyIndex = useRef(0);
   const [spokenText, setSpokenText] = useState('');
+  const [replyExplanation, setReplyExplanation] = useState<ReplyExplanation | null>(null);
 
   // Warm the first sentence of each reply in the background so the first words
   // play instantly; speak() streams the rest sentence-by-sentence on demand, so
@@ -89,11 +90,12 @@ export default function HomeView() {
 
   // Speak a scripted reply: brief "thinking" while the clip loads, then the
   // mouth runs with the audio. onEnd also covers errors so we never get stuck.
-  const playReply = (text: string) => {
-    setSpokenText(text);
+  const playReply = (reply: ScriptedReply) => {
+    setSpokenText(reply.text);
+    setReplyExplanation(reply.explanation ?? null);
     setListening(false);
     setThinking(true);
-    speak(text, DEFAULT_AVATAR.voiceId, {
+    speak(reply.text, DEFAULT_AVATAR.voiceId, {
       onStart: () => setThinking(false),
       onEnd: () => setThinking(false),
     });
@@ -115,7 +117,7 @@ export default function HomeView() {
     if (listening) {
       const reply = SCRIPTED_REPLIES[replyIndex.current % SCRIPTED_REPLIES.length];
       replyIndex.current += 1;
-      playReply(reply.text);
+      playReply(reply);
       return;
     }
     // Idle → start listening.
@@ -126,7 +128,7 @@ export default function HomeView() {
     unlockAudio(); // same gesture-unlock as the orb tap
     const reply = SCRIPTED_REPLIES.find((r) => r.chip === label);
     if (reply) {
-      playReply(reply.text);
+      playReply(reply);
       return;
     }
     toast(`"${label}"`, {
@@ -145,18 +147,20 @@ export default function HomeView() {
   // also while the bubble is expanded over it, so the overlay reads cleanly.
   const busy = orbState !== 'idle';
   const dimmed = busy || expanded;
+  const showReplyExplanation = !!replyExplanation && !listening && !thinking;
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column', gap: 2, pb: 2 }}>
       {/* hero — tappable avatar (the mic) + the avatar's nudge. Grows to
           absorb spare height on tall phones, shrinks on short ones. */}
       <Box
         sx={{
-          flex: '1 1 auto',
-          minHeight: 0,
+          flex: showReplyExplanation ? '0 0 auto' : '1 1 auto',
+          minHeight: showReplyExplanation ? 'auto' : 0,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
+          justifyContent: showReplyExplanation ? 'flex-start' : 'center',
+          pt: showReplyExplanation ? 1 : 0,
           // sit above the bottom group so the expanded bubble overlays it
           position: 'relative',
           zIndex: expanded ? 2 : 1,
@@ -177,7 +181,9 @@ export default function HomeView() {
         />
       </Box>
 
-      {/* bottom group — predefined questions + glance, pinned above the nav.
+      {showReplyExplanation && <HomeGlance explanation={replyExplanation} />}
+
+      {/* bottom group — predefined questions for the next prompt.
           Dimmed + non-interactive while the avatar is busy. */}
       <Box
         sx={{
@@ -194,7 +200,6 @@ export default function HomeView() {
         }}
       >
         <HomeQuickActions onAction={handleQuickAction} />
-        <HomeGlance />
       </Box>
     </Box>
   );
