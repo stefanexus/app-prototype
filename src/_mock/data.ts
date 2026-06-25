@@ -405,7 +405,7 @@ export const MOCK_NUDGES = [
 // ----------------------------------------------------------------------
 
 export const DEFAULT_AVATAR: AvatarConfig = {
-  name: "Nova",
+  name: "Aura",
   gender: "unspecified",
   appearanceId: "nova",
   voiceId: "samantha",

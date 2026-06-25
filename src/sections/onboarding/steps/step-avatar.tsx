@@ -123,7 +123,7 @@ export default function StepAvatar() {
             {...field}
             fullWidth
             label="Avatar name"
-            placeholder="e.g. Nova"
+            placeholder="e.g. Aura"
             error={!!fieldState.error}
             helperText={fieldState.error?.message}
           />
