@@ -305,12 +305,12 @@ export default function Avatar({
     let prev = 0;
     const tick = () => {
       // Step to a DIFFERENT shape each frame (no repeated-shape stalls) at a
-      // varied 90-160ms cadence, so it reads as speech rather than a metronome.
+      // varied 160-280ms cadence, so it reads as calm speech, not a metronome.
       let next = Math.floor(rand(0, TALK_SHAPES.length)) % TALK_SHAPES.length;
       if (next === prev) next = (next + 1) % TALK_SHAPES.length;
       prev = next;
       setMouthIdx(next);
-      frame = setTimeout(tick, rand(90, 160));
+      frame = setTimeout(tick, rand(160, 280));
     };
     tick();
     return () => clearTimeout(frame);
@@ -513,7 +513,7 @@ export default function Avatar({
                 rx: TALK_SHAPES[mouthIdx].rx,
                 ry: TALK_SHAPES[mouthIdx].ry,
               }}
-              transition={{ duration: 0.07, ease: 'easeOut' }}
+              transition={{ duration: 0.13, ease: 'easeOut' }}
             />
           ) : !compact && reduceMotion && expr.mouth === 'talking' ? (
             // Reduced motion: hold an open mouth so "speaking" still reads.

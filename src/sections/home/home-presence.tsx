@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Box from '@mui/material/Box';
@@ -11,10 +11,15 @@ import { GRADIENTS, PALETTE } from '../../theme';
 import type { AvatarState } from '../../types';
 
 // ----------------------------------------------------------------------
-// Avatar presence — the hero of the Home screen. Tap the orb once and the
-// avatar speaks aloud (a quick way to hear its voice); tap again to stop.
-// Below it, a compact "speech bubble" carries the avatar's voice — a
-// proactive nudge when idle, the spoken line while speaking.
+// Avatar presence — the hero of the Home screen. Tap the orb once (or say
+// the wake word) and the avatar starts listening; tap again and it answers
+// aloud. Below it, a compact "speech bubble" carries the avatar's voice — a
+// proactive nudge when idle, a "Listening…" cue while listening, and a short
+// caption of the spoken reply while it talks.
+//
+// The bubble shows the first 3 lines by default; when the text is longer it
+// becomes tap-to-expand and the full reply floats out as an overlay panel
+// over the bottom group (HomeView dims that group while it's open).
 // ----------------------------------------------------------------------
 
 type Nudge = {
@@ -29,26 +34,53 @@ type Props = {
   appearanceId: string;
   avatarName: string;
   nudge: Nudge;
-  /** Avatar is voicing a line — shows it in the bubble + animates the face. */
-  speaking: boolean;
-  /** The line the avatar is speaking aloud. */
+  /** The line the avatar is speaking aloud (shown as a short caption). */
   spokenText: string;
+  /** Wake word to advertise in the idle hint, when voice activation works. */
+  wakeWord?: string;
   onToggle: () => void;
   /** Orb diameter — driven by viewport height so the screen always fits. */
   orbSize: number;
+  /** Whether the speech bubble is expanded to its full height. */
+  expanded: boolean;
+  /** Toggle the expanded state of the speech bubble. */
+  onToggleExpand: () => void;
 };
 
 const MotionBox = motion.create(Box);
+
+// Collapsed bubbles show at most this many lines; the rest is revealed on tap.
+const COLLAPSED_LINES = 3;
+
+const CLAMP_SX = {
+  display: '-webkit-box',
+  WebkitLineClamp: COLLAPSED_LINES,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+} as const;
+
+// Shared balloon surface (collapsed, in-flow version).
+const BALLOON_SX = {
+  position: 'relative',
+  p: 1.5,
+  borderRadius: 2.5,
+  bgcolor: PALETTE.surfaceHi,
+  border: `1px solid ${PALETTE.border}`,
+  background: GRADIENTS.brandSoft,
+  backdropFilter: 'blur(6px)',
+} as const;
 
 export default function HomePresence({
   state,
   appearanceId,
   avatarName,
   nudge,
-  speaking,
   spokenText,
+  wakeWord,
   onToggle,
   orbSize,
+  expanded,
+  onToggleExpand,
 }: Props) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -58,6 +90,202 @@ export default function HomePresence({
       }
     },
     [onToggle]
+  );
+
+  const handleExpandKey = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onToggleExpand();
+      }
+    },
+    [onToggleExpand]
+  );
+
+  const listening = state === 'listening';
+  const thinking = state === 'thinking';
+  const speaking = state === 'speaking';
+  // Engaged in any way (listening, thinking or speaking): zoom in + pulse.
+  const active = listening || thinking || speaking;
+
+  // Whether the collapsed caption is actually clipped (more than 3 lines) —
+  // only then is the bubble worth expanding. Measured from the clamped node.
+  const textRef = useRef<HTMLElement | null>(null);
+  const roRef = useRef<ResizeObserver | null>(null);
+  const [overflowing, setOverflowing] = useState(false);
+
+  const measure = useCallback(() => {
+    const el = textRef.current;
+    setOverflowing(!!el && el.scrollHeight - el.clientHeight > 1);
+  }, []);
+
+  // Attach to the clamped caption and re-measure on any size change — this
+  // catches viewport resizes and, crucially, the web-font swap, which reflows
+  // the text (the fallback font wraps wider, so measuring before it loads can
+  // leave a stale "expandable" flag on a line that actually fits).
+  const setTextRef = useCallback(
+    (node: HTMLElement | null) => {
+      roRef.current?.disconnect();
+      roRef.current = null;
+      textRef.current = node;
+      if (!node) {
+        setOverflowing(false);
+        return;
+      }
+      measure();
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => measure());
+        ro.observe(node);
+        roRef.current = ro;
+      }
+    },
+    [measure]
+  );
+
+  // Re-measure when the caption content changes…
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, state, spokenText, nudge.text, orbSize, expanded]);
+
+  // …and once web fonts finish loading, then clean up the observer on unmount.
+  useEffect(() => {
+    document.fonts?.ready.then(() => measure()).catch(() => {});
+    return () => roRef.current?.disconnect();
+  }, [measure]);
+
+  // Control hint under the orb — one line per state.
+  const hint = speaking
+    ? { icon: 'solar:soundwave-bold-duotone', color: PALETTE.cyan, text: 'Tap to stop' }
+    : thinking
+      ? { icon: 'solar:soundwave-bold-duotone', color: PALETTE.violetLight, text: 'Thinking…' }
+      : listening
+        ? { icon: 'solar:microphone-bold-duotone', color: PALETTE.cyan, text: 'Listening… tap to reply' }
+        : {
+            icon: 'solar:play-bold',
+            color: PALETTE.textSecondary,
+            text: wakeWord ? `Tap to talk — or say “${wakeWord}”` : 'Tap to talk',
+          };
+
+  const ariaLabel = speaking
+    ? 'Stop speaking'
+    : listening
+      ? 'Listening — tap to reply'
+      : 'Tap to talk';
+
+  // Which bubble variant is showing (drives the enter/exit transition).
+  const bubbleKey = speaking || thinking ? 'reply' : listening ? 'listening' : 'nudge';
+
+  // The collapsed bubble is only interactive once there is hidden text to show.
+  const canExpand = overflowing || expanded;
+  const inFlowInteractive = overflowing && !expanded;
+
+  // Body of the bubble for the current state. `clamp` drives the collapsed
+  // 3-line cap and attaches the measuring ref; the expanded overlay passes
+  // false to show the whole thing.
+  const renderBody = (clamp: boolean) => {
+    if (speaking || thinking) {
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+          <Iconify
+            icon="solar:soundwave-bold-duotone"
+            width={20}
+            sx={{ color: PALETTE.violetLight, flexShrink: 0, mt: '2px' }}
+          />
+          <Typography
+            ref={clamp ? setTextRef : undefined}
+            variant="body2"
+            sx={{
+              color: PALETTE.text,
+              fontWeight: 600,
+              lineHeight: 1.4,
+              ...(clamp ? CLAMP_SX : {}),
+            }}
+          >
+            {thinking ? 'Thinking…' : spokenText}
+          </Typography>
+        </Box>
+      );
+    }
+    if (listening) {
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Iconify
+            icon="solar:microphone-bold-duotone"
+            width={20}
+            sx={{ color: PALETTE.cyan, flexShrink: 0 }}
+          />
+          <Typography variant="body2" sx={{ color: PALETTE.text, fontWeight: 600, lineHeight: 1.4 }}>
+            Listening…
+          </Typography>
+        </Box>
+      );
+    }
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+        <Box
+          sx={{
+            flexShrink: 0,
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: alpha(PALETTE.violet, 0.18),
+          }}
+        >
+          <Iconify icon={nudge.icon} width={16} sx={{ color: PALETTE.violetLight }} />
+        </Box>
+        <Typography
+          ref={clamp ? setTextRef : undefined}
+          variant="body2"
+          sx={{
+            color: PALETTE.text,
+            lineHeight: 1.4,
+            ...(clamp ? CLAMP_SX : {}),
+          }}
+        >
+          {nudge.text}
+        </Typography>
+      </Box>
+    );
+  };
+
+  // Little round chevron in the bubble's top-right corner — the expand cue.
+  const renderChevron = (up: boolean) => (
+    <Box
+      aria-hidden
+      sx={{
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        width: 22,
+        height: 22,
+        borderRadius: '50%',
+        display: 'grid',
+        placeItems: 'center',
+        bgcolor: alpha(PALETTE.violet, 0.18),
+      }}
+    >
+      <Iconify
+        icon={up ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'}
+        width={14}
+        sx={{ color: PALETTE.violetLight }}
+      />
+    </Box>
+  );
+
+  const name = (
+    <Typography
+      variant="overline"
+      sx={{
+        color: PALETTE.violetLight,
+        letterSpacing: '0.08em',
+        display: 'block',
+        lineHeight: 1.5,
+      }}
+    >
+      {avatarName}
+    </Typography>
   );
 
   return (
@@ -70,17 +298,21 @@ export default function HomePresence({
         width: '100%',
       }}
     >
-      {/* The avatar is the tap-to-speak control. A gentle pulse while it
-          speaks; idle breathing lives in Avatar. */}
+      {/* The avatar is the tap-to-talk control. A gentle pulse while it's
+          engaged; idle breathing lives in Avatar. */}
       <MotionBox
         role="button"
         tabIndex={0}
         onClick={onToggle}
         onKeyDown={handleKeyDown}
-        aria-label={speaking ? 'Stop speaking' : 'Tap to hear me'}
+        aria-label={ariaLabel}
         whileTap={{ scale: 0.94 }}
-        animate={{ scale: speaking ? 1.06 : 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        animate={{ scale: active ? [1.3, 1.4, 1.3] : 1 }}
+        transition={
+          active
+            ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
+            : { duration: 0.3, ease: 'easeOut' }
+        }
         sx={{
           cursor: 'pointer',
           outline: 'none',
@@ -94,17 +326,13 @@ export default function HomePresence({
 
       {/* control hint */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-        <Iconify
-          icon={speaking ? 'solar:soundwave-bold-duotone' : 'solar:play-bold'}
-          width={16}
-          sx={{ color: speaking ? PALETTE.cyan : PALETTE.textSecondary }}
-        />
+        <Iconify icon={hint.icon} width={16} sx={{ color: hint.color }} />
         <Typography variant="body2" sx={{ color: PALETTE.textSecondary, fontWeight: 600 }}>
-          {speaking ? 'Tap to stop' : 'Tap to hear me'}
+          {hint.text}
         </Typography>
       </Box>
 
-      {/* compact speech bubble — the avatar speaking */}
+      {/* compact speech bubble — the avatar's voice */}
       <Box sx={{ width: '100%', position: 'relative' }}>
         {/* little tail pointing up to the orb */}
         <Box
@@ -122,85 +350,72 @@ export default function HomePresence({
           }}
         />
 
+        {/* collapsed bubble — always in flow, so it reserves the layout height
+            and the orb never jumps when the overlay opens. */}
         <Box
-          sx={{
-            position: 'relative',
-            p: 1.5,
-            borderRadius: 2.5,
-            bgcolor: PALETTE.surfaceHi,
-            border: `1px solid ${PALETTE.border}`,
-            background: GRADIENTS.brandSoft,
-            backdropFilter: 'blur(6px)',
-          }}
+          role={inFlowInteractive ? 'button' : undefined}
+          tabIndex={inFlowInteractive ? 0 : undefined}
+          aria-expanded={inFlowInteractive ? false : undefined}
+          aria-label={inFlowInteractive ? 'Show full message' : undefined}
+          onClick={inFlowInteractive ? onToggleExpand : undefined}
+          onKeyDown={inFlowInteractive ? handleExpandKey : undefined}
+          sx={{ ...BALLOON_SX, cursor: inFlowInteractive ? 'pointer' : 'default' }}
         >
-          <Typography
-            variant="overline"
-            sx={{
-              color: PALETTE.violetLight,
-              letterSpacing: '0.08em',
-              display: 'block',
-              lineHeight: 1.5,
-            }}
-          >
-            {avatarName}
-          </Typography>
+          {name}
 
           <AnimatePresence mode="wait">
             <MotionBox
-              key={speaking ? 'speaking' : 'nudge'}
+              key={bubbleKey}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
             >
-              {speaking ? (
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Iconify
-                    icon="solar:soundwave-bold-duotone"
-                    width={20}
-                    sx={{ color: PALETTE.violetLight, flexShrink: 0, mt: '2px' }}
-                  />
-                  <Typography
-                    variant="body2"
-                    sx={{ color: PALETTE.text, fontWeight: 600, lineHeight: 1.4 }}
-                  >
-                    {spokenText}
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Box
-                    sx={{
-                      flexShrink: 0,
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      display: 'grid',
-                      placeItems: 'center',
-                      bgcolor: alpha(PALETTE.violet, 0.18),
-                    }}
-                  >
-                    <Iconify icon={nudge.icon} width={16} sx={{ color: PALETTE.violetLight }} />
-                  </Box>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: PALETTE.text,
-                      lineHeight: 1.4,
-                      // clamp so a long nudge can't blow the no-scroll budget
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {nudge.text}
-                  </Typography>
-                </Box>
-              )}
+              {renderBody(true)}
             </MotionBox>
           </AnimatePresence>
+
+          {inFlowInteractive && renderChevron(false)}
         </Box>
+
+        {/* expanded overlay — floats out over the bottom group (which HomeView
+            dims) and grows downward to show the whole message. */}
+        <AnimatePresence>
+          {canExpand && expanded && (
+            <MotionBox
+              key="expanded"
+              role="button"
+              tabIndex={0}
+              aria-expanded
+              aria-label="Collapse message"
+              onClick={onToggleExpand}
+              onKeyDown={handleExpandKey}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              sx={{
+                ...BALLOON_SX,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 20,
+                cursor: 'pointer',
+                // opaque surface (gradient layered over solid) so the dimmed
+                // content below never bleeds through the long caption
+                background: `${GRADIENTS.brandSoft}, ${PALETTE.surfaceHi}`,
+                boxShadow: '0 20px 48px rgba(0,0,0,0.55)',
+                maxHeight: 'min(58vh, 420px)',
+                overflowY: 'auto',
+              }}
+            >
+              {name}
+              {renderBody(false)}
+              {renderChevron(true)}
+            </MotionBox>
+          )}
+        </AnimatePresence>
       </Box>
     </Box>
   );

@@ -20,17 +20,26 @@ export function useSpeech() {
     };
   }, []);
 
-  const speak = useCallback((text: string, voiceId?: string) => {
-    speakRaw(text, {
-      voiceId,
-      onStart: () => {
-        if (mounted.current) setSpeaking(true);
-      },
-      onEnd: () => {
-        if (mounted.current) setSpeaking(false);
-      },
-    });
-  }, []);
+  const speak = useCallback(
+    (
+      text: string,
+      voiceId?: string,
+      opts?: { onStart?: () => void; onEnd?: () => void }
+    ) => {
+      speakRaw(text, {
+        voiceId,
+        onStart: () => {
+          if (mounted.current) setSpeaking(true);
+          opts?.onStart?.();
+        },
+        onEnd: () => {
+          if (mounted.current) setSpeaking(false);
+          opts?.onEnd?.();
+        },
+      });
+    },
+    []
+  );
 
   const stop = useCallback(() => {
     cancelSpeech();

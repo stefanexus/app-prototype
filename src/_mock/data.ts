@@ -113,6 +113,33 @@ export const MOCK_CONVERSATIONS: ConversationSummary[] = [
   },
 ];
 
+// ----------------------------------------------------------------------
+// Scripted avatar replies — the prototype fakes the LLM with these fixed
+// answers. The Home orb plays them IN ORDER on each ask (then loops); the
+// quick-action chips jump straight to the matching one via `chip`.
+// ----------------------------------------------------------------------
+
+export interface ScriptedReply {
+  id: string;
+  /** Quick-action chip label that also triggers this reply, if any. */
+  chip?: string;
+  /** The full line the avatar speaks aloud (shown as a short caption). */
+  text: string;
+}
+
+export const SCRIPTED_REPLIES: ScriptedReply[] = [
+  {
+    id: 'movie',
+    chip: 'What movie tonight?',
+    text: "Hey, I noticed today was a lot - your heart rate's been up and your calendar was packed wall to wall. Your playlist tonight is giving me Phoebe Bridgers and Bon Iver, so I know you're in that reflective headspace, but I don't think you want anything too heavy. You've got about 90 minutes before you really should be winding down — you have a 9am tomorrow and you're already behind on sleep this week. So here's what I'm thinking: Palm Springs. It's on Hulu, it's 90 minutes exactly, and if you loved Groundhog Day and About Time, this is going to feel like it was made for you. It's funny, it's a little bittersweet, and it asks absolutely nothing of you after the day you've had. Last time I sent you something intense on a night like this, you came back with two stars and 'not the vibe' — I learned my lesson. Trust me on this one.",
+  },
+  {
+    id: 'work',
+    chip: 'Plan my day',
+    text: "Good morning. Before you dive in, I had a quick look at your day. Sarah sent you an email at 7:52am — before 8 — asking for the Q3 results report by tomorrow at 5pm. Leadership moved the quarterly review up to Friday, so that deadline is real. Here's the thing though: you have meetings at 11, 2, and 4 today, which means your actual free time is a lot narrower than it sounds. You're a morning person — your best focus window is right now, and it closes in less than two hours. Everything else on your plate — the Slack mentions, the design review feedback — none of it is on fire. Park it. I've already put together a draft outline for the report and pulled your Q2 submission so you can match the format Sarah already approved. You can either let me draft the whole thing and you refine it, or we can work through it section by section together. Either way, the clock's ticking — let's start with the executive summary and go from there.",
+  },
+];
+
 // Sample nudges for the Home proactive card (Suggestion Engine preview).
 export const MOCK_NUDGES = [
   { id: 'n1', category: 'social', icon: 'solar:phone-calling-rounded-bold-duotone', text: "You haven't called Mum in 10 days — want me to remind you tonight?" },
