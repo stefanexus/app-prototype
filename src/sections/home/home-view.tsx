@@ -4,8 +4,9 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { toast } from 'sonner';
 
 import type { AvatarState } from '../../types';
-import { DEFAULT_AVATAR, MOCK_NUDGES, SCRIPTED_REPLIES } from '../../_mock';
+import { MOCK_NUDGES, SCRIPTED_REPLIES } from '../../_mock';
 import type { ReplyExplanation, ScriptedReply } from '../../_mock';
+import { useAvatarConfig } from '../../hooks/use-avatar-config';
 import { useSpeech } from '../../hooks/use-speech';
 import { useWakeWord } from '../../hooks/use-wake-word';
 import { prefetchSpeech, unlockAudio } from '../../lib/speech';
@@ -20,13 +21,16 @@ import HomeQuickActions from './home-quick-actions';
 // are present while the bottom navigation remains pinned by the shell.
 //
 // Conversation flow (PRD stories 4-7): the orb is the tap-to-talk control.
-//   idle ──tap / say "Nova"──▶ listening ──tap──▶ (thinking) ──▶ speaking
+//   idle ──tap / say avatar name──▶ listening ──tap──▶ (thinking) ──▶ speaking
 // The avatar then "answers" with a scripted reply (the LLM is faked). Taps
 // cycle through SCRIPTED_REPLIES in order; the quick-action chips jump
 // straight to their matching reply. Tapping while it talks interrupts.
 // ----------------------------------------------------------------------
 
 export default function HomeView() {
+  const { avatar } = useAvatarConfig();
+  const avatarName = avatar.name.trim() || 'your avatar';
+  const wakePhrase = avatar.name.trim();
   const nudge = MOCK_NUDGES[0];
 
   // `speaking` is owned by the speech engine (so the mouth animates with the
@@ -70,9 +74,9 @@ export default function HomeView() {
   // there's no need to generate every clip up front.
   useEffect(() => {
     SCRIPTED_REPLIES.forEach((r) =>
-      prefetchSpeech(r.text, DEFAULT_AVATAR.voiceId, { lead: true })
+      prefetchSpeech(r.text, avatar.voiceId, { lead: true })
     );
-  }, []);
+  }, [avatar.voiceId]);
 
   // Voice activation: saying the avatar's name starts a conversation. Only
   // armed while idle; tapping the orb does the same thing without the mic.
@@ -81,8 +85,8 @@ export default function HomeView() {
     status: wakeStatus,
     arm: armWakeWord,
   } = useWakeWord({
-    phrase: DEFAULT_AVATAR.name,
-    enabled: orbState === 'idle',
+    phrase: wakePhrase,
+    enabled: orbState === 'idle' && wakePhrase.length > 0,
     onWake: () => {
       if (stateRef.current === 'idle') setListening(true);
     },
@@ -95,7 +99,7 @@ export default function HomeView() {
     setReplyExplanation(reply.explanation ?? null);
     setListening(false);
     setThinking(true);
-    speak(reply.text, DEFAULT_AVATAR.voiceId, {
+    speak(reply.text, avatar.voiceId, {
       onStart: () => setThinking(false),
       onEnd: () => setThinking(false),
     });
@@ -132,7 +136,7 @@ export default function HomeView() {
       return;
     }
     toast(`"${label}"`, {
-      description: `${DEFAULT_AVATAR.name} is thinking about that…`,
+      description: `${avatarName} is thinking about that…`,
     });
   };
 
@@ -168,11 +172,11 @@ export default function HomeView() {
       >
         <HomePresence
           state={orbState}
-          appearanceId={DEFAULT_AVATAR.appearanceId}
-          avatarName={DEFAULT_AVATAR.name}
+          appearanceId={avatar.appearanceId}
+          avatarName={avatarName}
           nudge={nudge}
           spokenText={spokenText}
-          wakeWord={wakeSupported ? DEFAULT_AVATAR.name : undefined}
+          wakeWord={wakeSupported && wakePhrase ? avatarName : undefined}
           wakeStatus={wakeStatus}
           onToggle={handleTap}
           orbSize={orbSize}

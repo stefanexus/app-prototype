@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // ----------------------------------------------------------------------
 // useWakeWord - listens on the mic (Web Speech API SpeechRecognition) for a
 // spoken trigger word and fires onWake when it hears it. Used so the user can
-// say the avatar's name ("Nova") to start a conversation, as an alternative to
+// say the avatar's configured name to start a conversation, as an alternative to
 // tapping the orb. The tap path always works; this is purely additive:
 //   - Unsupported browser (Safari/Firefox) -> supported:false, never fires.
 //   - Mic permission denied -> blocked status; tap still works.

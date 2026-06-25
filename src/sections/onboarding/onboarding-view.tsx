@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router';
 
 import MobileShell from '../../components/mobile-shell';
 import Iconify from '../../components/iconify';
+import { updateAvatarConfig } from '../../hooks/use-avatar-config';
 import { paths } from '../../routes/paths';
 import { PALETTE, GRADIENTS } from '../../theme';
 import {
@@ -70,8 +71,14 @@ export default function OnboardingView() {
     if (!valid) return;
 
     if (isLast) {
-      // No persistence in the visual prototype — go meet the avatar.
-      void getValues();
+      const values = getValues();
+      updateAvatarConfig({
+        name: values.avatarName.trim(),
+        gender: values.gender,
+        appearanceId: values.appearanceId,
+        voiceId: values.voiceId,
+        personalityTone: values.personalityTone,
+      });
       navigate(paths.home);
       return;
     }

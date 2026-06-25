@@ -16,14 +16,13 @@ import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
 import Iconify from '../../components/iconify';
-import { DEFAULT_AVATAR } from '../../_mock';
+import { useAvatarConfig } from '../../hooks/use-avatar-config';
 import { GRADIENTS, PALETTE } from '../../theme';
-import type { PersonalityTone } from '../../types';
 import AvatarCustomiserCard from './avatar-customiser-card';
 
 // ----------------------------------------------------------------------
 // Settings — avatar customisation (live preview), preference switches and
-// a data-clearing flow. All state is local; nothing is persisted.
+// a data-clearing flow. Avatar settings are shared with Home via localStorage.
 // ----------------------------------------------------------------------
 
 const MotionBox = motion.create(Box);
@@ -56,13 +55,7 @@ const PREF_ROWS: { key: keyof Preferences; label: string; description: string; i
 ];
 
 export default function SettingsView() {
-  // avatar config (local, live-updates the preview orb)
-  const [name, setName] = useState(DEFAULT_AVATAR.name);
-  const [appearanceId, setAppearanceId] = useState(DEFAULT_AVATAR.appearanceId);
-  const [personalityTone, setPersonalityTone] = useState<PersonalityTone>(
-    DEFAULT_AVATAR.personalityTone
-  );
-  const [voiceId, setVoiceId] = useState(DEFAULT_AVATAR.voiceId);
+  const { avatar, updateAvatar, resetAvatar } = useAvatarConfig();
 
   // preferences
   const [prefs, setPrefs] = useState<Preferences>({
@@ -79,6 +72,7 @@ export default function SettingsView() {
 
   const handleClearData = () => {
     setConfirmOpen(false);
+    resetAvatar();
     toast.success('All data cleared.');
   };
 
@@ -87,14 +81,14 @@ export default function SettingsView() {
       id: 'avatar',
       node: (
         <AvatarCustomiserCard
-          name={name}
-          onNameChange={setName}
-          appearanceId={appearanceId}
-          onAppearanceChange={setAppearanceId}
-          personalityTone={personalityTone}
-          onPersonalityChange={setPersonalityTone}
-          voiceId={voiceId}
-          onVoiceChange={setVoiceId}
+          name={avatar.name}
+          onNameChange={(name) => updateAvatar({ name })}
+          appearanceId={avatar.appearanceId}
+          onAppearanceChange={(appearanceId) => updateAvatar({ appearanceId })}
+          personalityTone={avatar.personalityTone}
+          onPersonalityChange={(personalityTone) => updateAvatar({ personalityTone })}
+          voiceId={avatar.voiceId}
+          onVoiceChange={(voiceId) => updateAvatar({ voiceId })}
         />
       ),
     },
