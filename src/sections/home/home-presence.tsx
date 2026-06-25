@@ -14,6 +14,7 @@ import { alpha } from "@mui/material/styles";
 import Avatar from "../../components/avatar";
 import Iconify from "../../components/iconify";
 import { GRADIENTS, PALETTE } from "../../theme";
+import type { WakeWordStatus } from "../../hooks/use-wake-word";
 import type { AvatarState } from "../../types";
 
 // ----------------------------------------------------------------------
@@ -44,6 +45,8 @@ type Props = {
   spokenText: string;
   /** Wake word to advertise in the idle hint, when voice activation works. */
   wakeWord?: string;
+  /** Current wake-word recogniser status, if supported. */
+  wakeStatus?: WakeWordStatus;
   onToggle: () => void;
   /** Orb diameter — driven by viewport height so the screen always fits. */
   orbSize: number;
@@ -83,6 +86,7 @@ export default function HomePresence({
   nudge,
   spokenText,
   wakeWord,
+  wakeStatus,
   onToggle,
   orbSize,
   expanded,
@@ -113,6 +117,10 @@ export default function HomePresence({
   const speaking = state === "speaking";
   // Engaged in any way (listening, thinking or speaking): zoom in + pulse.
   const active = listening || thinking || speaking;
+  const wakeReady =
+    !!wakeWord && (wakeStatus === "listening" || wakeStatus === "starting");
+  const wakeNeedsGesture = !!wakeWord && wakeStatus === "needs-gesture";
+  const wakeBlocked = !!wakeWord && wakeStatus === "blocked";
 
   // Whether the collapsed caption is actually clipped (more than 3 lines) —
   // only then is the bubble worth expanding. Measured from the clamped node.
@@ -181,16 +189,20 @@ export default function HomePresence({
         : {
             icon: "solar:play-bold",
             color: PALETTE.textSecondary,
-            text: wakeWord
-              ? `Tap to talk — or say “${wakeWord}”`
-              : "Tap to talk",
+            text: wakeReady
+              ? `Tap to talk - or say "${wakeWord}"`
+              : wakeNeedsGesture
+                ? `Tap to enable "${wakeWord}"`
+                : wakeBlocked
+                  ? "Mic blocked - tap to talk"
+                  : "Tap to talk",
           };
 
   const ariaLabel = speaking
-    ? "Stop speaking"
+    ? `Stop ${avatarName} speaking`
     : listening
-      ? "Listening — tap to reply"
-      : "Tap to talk";
+      ? `${avatarName} is listening - tap to reply`
+      : `Tap to talk to ${avatarName}`;
 
   // Which bubble variant is showing (drives the enter/exit transition).
   const bubbleKey =
@@ -301,20 +313,6 @@ export default function HomePresence({
         sx={{ color: PALETTE.violetLight }}
       />
     </Box>
-  );
-
-  const name = (
-    <Typography
-      variant="overline"
-      sx={{
-        color: PALETTE.violetLight,
-        letterSpacing: "0.08em",
-        display: "block",
-        lineHeight: 1.5,
-      }}
-    >
-      {avatarName}
-    </Typography>
   );
 
   return (

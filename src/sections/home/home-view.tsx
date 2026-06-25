@@ -49,7 +49,8 @@ export default function HomeView() {
   // Collapse the bubble whenever the conversation moves on (new reply, starts
   // listening, returns to idle) so the overlay never lingers over stale text.
   useEffect(() => {
-    setExpanded(false);
+    const timer = window.setTimeout(() => setExpanded(false), 0);
+    return () => window.clearTimeout(timer);
   }, [orbState]);
 
   // Mirror the state for handlers that must read it without re-subscribing
@@ -74,7 +75,11 @@ export default function HomeView() {
 
   // Voice activation: saying the avatar's name starts a conversation. Only
   // armed while idle; tapping the orb does the same thing without the mic.
-  const { supported: wakeSupported } = useWakeWord({
+  const {
+    supported: wakeSupported,
+    status: wakeStatus,
+    arm: armWakeWord,
+  } = useWakeWord({
     phrase: DEFAULT_AVATAR.name,
     enabled: orbState === 'idle',
     onWake: () => {
@@ -95,6 +100,7 @@ export default function HomeView() {
   };
 
   const handleTap = () => {
+    armWakeWord();
     // Unlock audio on this gesture so the first reply isn't silent (browsers
     // only resume an AudioContext from inside a user gesture).
     unlockAudio();
@@ -163,6 +169,7 @@ export default function HomeView() {
           nudge={nudge}
           spokenText={spokenText}
           wakeWord={wakeSupported ? DEFAULT_AVATAR.name : undefined}
+          wakeStatus={wakeStatus}
           onToggle={handleTap}
           orbSize={orbSize}
           expanded={expanded}
