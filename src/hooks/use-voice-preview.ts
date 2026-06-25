@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { VoiceOption } from '../types';
-import { speak, cancelSpeech, isTtsSupported } from '../lib/speech';
+import { VOICE_OPTIONS } from '../_mock';
+import { speak, cancelSpeech, isTtsSupported, prefetchSpeech } from '../lib/speech';
 
 // ----------------------------------------------------------------------
 // Speaks a short sample line for a chosen voice using the SHARED speech
@@ -53,6 +54,12 @@ export function useVoicePreview() {
     },
     [stop]
   );
+
+  // Warm every voice sample in the background as soon as the picker opens, so
+  // the first Preview click plays instantly instead of waiting ~2s on Grok.
+  useEffect(() => {
+    VOICE_OPTIONS.forEach((v) => prefetchSpeech(v.sample, v.id));
+  }, []);
 
   // Stop narration when the consuming screen unmounts.
   useEffect(() => () => cancelSpeech(), []);

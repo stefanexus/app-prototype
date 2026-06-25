@@ -177,6 +177,10 @@ export default function HomeGlance() {
           px: 2.5,
           pb: 0.5,
           scrollSnapType: 'x proximity',
+          // scroll-padding must match the px inset (2.5 = 20px). Without it
+          // scroll-snap aligns the first tile's 'start' to the frame edge,
+          // eating the inset and clipping the first card on load.
+          scrollPaddingInline: '20px',
           // hide scrollbar for a cleaner mobile feel
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
