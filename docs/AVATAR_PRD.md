@@ -1,6 +1,6 @@
 # PRD: Avatar Engine — Expressive Face-on-Orb
 
-> **Status:** Core component **built** (`src/components/avatar.tsx`); call-site migration + orb deletion **outstanding**. See *Implementation Status (as built)* below.
+> **Status:** **Complete.** Core component built (`src/components/avatar.tsx`); all six call sites migrated to `Avatar`; `avatar-orb.tsx` deleted; build + lint clean; manual QA walked on every screen. See *Implementation Status (as built)* below.
 > **Scope:** Replace the placeholder gradient orb (`src/components/avatar-orb.tsx`) with a real, animated 2D character — an *expressive face-on-orb* — across the whole prototype.
 > **Audience:** This document is written to be followed by multiple independent agents. It is self-contained: an agent should not need the originating chat. Where exact coordinates/values are given, treat them as the spec so independent agents converge on the same look.
 > **Parent PRD:** `docs/PRD.md` (the overall Personal Avatar Assistant). This document refines the "Avatar Engine" module from that PRD and supersedes its avatar-rendering details.
@@ -38,10 +38,12 @@ Per-state durations preserve parity with the original orb (0.9 / 1.4 / 1.1 / 4s)
 - **Size-adaptive:** `COMPACT_THRESHOLD = 72`. Compact (`< 72`) shows head + blinking eyes + static smile only (no brows / saccades / talk loop / thinking dots / halo); the listening accent ring still renders where cheap.
 - **Reduced motion:** `useReducedMotion()` drops saccades, talk-loop, bob, tilt and blink loop; holds a static per-state expression (speaking → open mouth held; thinking dots static; halo static opacity).
 
-### Outstanding (Agent B — not yet done)
-- **Call-site migration is NOT done.** All six sites still `import AvatarOrb from '.../components/avatar-orb'` and render `<AvatarOrb .../>` (`home-presence`, `welcome-view`, `step-avatar`, `avatar-customiser-card`, `profile-view`, `history-view`).
-- **`src/components/avatar-orb.tsx` has NOT been deleted** — both `avatar.tsx` and `avatar-orb.tsx` currently coexist, which the PRD explicitly forbids.
-- **Build / lint / manual QA not yet verified** for the new component in place (it isn't mounted anywhere yet).
+### Done (Agent B — call-site migration & QA)
+- **Call-site migration complete.** All six sites now `import Avatar from '.../components/avatar'` and render `<Avatar .../>` with identical props (`home-presence`, `welcome-view`, `step-avatar`, `avatar-customiser-card`, `profile-view`, `history-view`). One stale comment in `home-presence` that named `AvatarOrb` was updated to `Avatar`; no other call-site changes.
+- **`src/components/avatar-orb.tsx` deleted.** Only `avatar.tsx` remains; no stale `AvatarOrb`/`avatar-orb` references in `src/`.
+- **Build + lint clean.** `npm run build` (`tsc -b` + `vite build`) passes; `npm run lint` reports 0 errors (1 pre-existing, unrelated `react-hooks/incompatible-library` warning in `onboarding-view.tsx`).
+- **Manual QA walked on every screen** (mobile viewport, no console errors): Welcome (190/idle — full face, Nova), Home (hero — tap toggles listening: widened eyes + raised brows + accent ring + "I'm listening…"), Settings customiser (80/speaking — talk loop confirmed cycling across frames; tinting Nova→Ember shifts head + brow/mouth tint), Onboarding (120 — live colour update Nova→Sage), Profile (56, compact — head + eyes + static smile, no brows), History (28, compact — clean legible thumbnails). All four state expressions confirmed (idle/listening/speaking visually; thinking via a temporary, reverted preview — floating "…" dots + up-aside gaze + tilted brow). Three appearances (Nova/Ember/Sage) verified on the face; all six swatches render via one shared tint path.
+- **Note:** Home wires only `idle`/`listening` (pre-existing); `speaking`/`thinking` are not driven from Home, so the checklist's Home speaking/thinking items reflect component capability, exercised in the customiser rather than on Home. Unchanged — out of scope.
 
 ### Deviation note
 - The luminous **head is a CSS `Box`** (gradient + `boxShadow` inset shading + blurred gloss highlight), ported from the orb — *not* the `<circle cx=50 cy=50 r=48>` described in the *Face geometry* section. Only the face (eyes/brows/mouth/dots) is SVG. This follows the "ported from the original orb" decision and is intended; the geometry section's circle is superseded on this point.

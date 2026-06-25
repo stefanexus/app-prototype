@@ -9,7 +9,7 @@ import { alpha } from '@mui/material/styles';
 import { PALETTE, GRADIENTS } from '../../theme';
 import { paths } from '../../routes/paths';
 import Iconify from '../../components/iconify';
-import AvatarOrb from '../../components/avatar-orb';
+import Avatar from '../../components/avatar';
 import MobileShell from '../../components/mobile-shell';
 
 // ----------------------------------------------------------------------
@@ -99,7 +99,7 @@ export default function WelcomeView() {
             py: 3,
           }}
         >
-          <AvatarOrb size={190} appearanceId="nova" state="idle" />
+          <Avatar size={190} appearanceId="nova" state="idle" />
         </MotionBox>
 
         {/* Feature highlights */}

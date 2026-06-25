@@ -6,7 +6,7 @@ import { alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 
-import AvatarOrb from '../../components/avatar-orb';
+import Avatar from '../../components/avatar';
 import {
   ACTIVITY_LEVELS,
   DEFAULT_AVATAR,
@@ -78,7 +78,7 @@ export default function ProfileView() {
   return (
     <Stack spacing={2.5}>
       <Stack spacing={1.5} sx={{ alignItems: 'center', textAlign: 'center', pt: 1 }}>
-        <AvatarOrb size={56} appearanceId={DEFAULT_AVATAR.appearanceId} state="idle" />
+        <Avatar size={56} appearanceId={DEFAULT_AVATAR.appearanceId} state="idle" />
         <Stack spacing={0.25}>
           <Typography variant="h5">{DEFAULT_AVATAR.name}</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>

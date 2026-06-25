@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 
-import AvatarOrb from '../../components/avatar-orb';
+import Avatar from '../../components/avatar';
 import Iconify from '../../components/iconify';
 import { DEFAULT_AVATAR, MOCK_CONVERSATION } from '../../_mock';
 import { GRADIENTS, PALETTE } from '../../theme';
@@ -124,7 +124,7 @@ function MessageBubble({ entry, index }: { entry: ConversationEntry; index: numb
     >
       {!isUser && (
         <Box sx={{ flexShrink: 0, mb: 0.25 }}>
-          <AvatarOrb size={28} appearanceId={DEFAULT_AVATAR.appearanceId} state="idle" />
+          <Avatar size={28} appearanceId={DEFAULT_AVATAR.appearanceId} state="idle" />
         </Box>
       )}
 

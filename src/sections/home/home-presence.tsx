@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
 
-import AvatarOrb from '../../components/avatar-orb';
+import Avatar from '../../components/avatar';
 import Iconify from '../../components/iconify';
 import { GRADIENTS, PALETTE } from '../../theme';
 import type { AvatarState } from '../../types';
@@ -66,8 +66,8 @@ export default function HomePresence({
         width: '100%',
       }}
     >
-      {/* The orb is the tap-to-talk control. It grows slightly while
-          listening; idle breathing + the listening ring live in AvatarOrb. */}
+      {/* The avatar is the tap-to-talk control. It zooms in while
+          listening; idle breathing + the listening ring live in Avatar. */}
       <MotionBox
         role="button"
         tabIndex={0}
@@ -75,7 +75,7 @@ export default function HomePresence({
         onKeyDown={handleKeyDown}
         aria-label={listening ? 'Stop listening' : 'Tap to talk'}
         whileTap={{ scale: 0.94 }}
-        animate={{ scale: listening ? 1.08 : 1 }}
+        animate={{ scale: listening ? 1.75 : 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
         sx={{
           cursor: 'pointer',
@@ -85,7 +85,7 @@ export default function HomePresence({
           borderRadius: '50%',
         }}
       >
-        <AvatarOrb size={orbSize} appearanceId={appearanceId} state={state} />
+        <Avatar size={orbSize} appearanceId={appearanceId} state={state} />
       </MotionBox>
 
       {/* control hint */}

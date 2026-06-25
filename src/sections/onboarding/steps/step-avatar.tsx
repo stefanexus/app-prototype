@@ -15,7 +15,7 @@ import {
   PERSONALITY_OPTIONS,
   VOICE_OPTIONS,
 } from '../../../_mock';
-import AvatarOrb from '../../../components/avatar-orb';
+import Avatar from '../../../components/avatar';
 import Iconify from '../../../components/iconify';
 import { PALETTE, GRADIENTS } from '../../../theme';
 import type { OnboardingFormValues } from '../form-schema';
@@ -44,7 +44,7 @@ export default function StepAvatar() {
         name="appearanceId"
         render={({ field: appearanceField }) => (
           <Box sx={{ display: 'grid', placeItems: 'center', pt: 1 }}>
-            <AvatarOrb size={120} appearanceId={appearanceField.value} state="idle" />
+            <Avatar size={120} appearanceId={appearanceField.value} state="idle" />
           </Box>
         )}
       />

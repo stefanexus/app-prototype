@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
 import { toast } from 'sonner';
 
-import AvatarOrb from '../../components/avatar-orb';
+import Avatar from '../../components/avatar';
 import Iconify from '../../components/iconify';
 import {
   AVATAR_APPEARANCES,
@@ -48,7 +48,7 @@ export default function AvatarCustomiserCard({
 
       {/* live preview */}
       <Stack spacing={2} sx={{ alignItems: 'center', mb: 2.5 }}>
-        <AvatarOrb size={80} appearanceId={appearanceId} state="speaking" />
+        <Avatar size={80} appearanceId={appearanceId} state="speaking" />
         <TextField
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
