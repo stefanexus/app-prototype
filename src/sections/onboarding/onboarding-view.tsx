@@ -35,8 +35,6 @@ const defaultValues: OnboardingFormValues = {
   personalityTone: 'friendly',
   name: '',
   age: '',
-  location: '',
-  timezone: 'Europe/Athens',
   activityLevel: 'moderate',
   dietaryRestrictions: [],
   fitnessGoals: '',

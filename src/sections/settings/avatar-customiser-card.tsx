@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 import Avatar from '../../components/avatar';
 import Iconify from '../../components/iconify';
+import { useVoicePreview } from '../../hooks/use-voice-preview';
 import {
   AVATAR_APPEARANCES,
   PERSONALITY_OPTIONS,
@@ -42,6 +43,7 @@ export default function AvatarCustomiserCard({
   voiceId,
   onVoiceChange,
 }: Props) {
+  const { playingId, preview } = useVoicePreview();
   return (
     <Card sx={{ p: 2.5 }}>
       <SectionLabel icon="solar:magic-stick-3-bold-duotone" label="Your avatar" />
@@ -193,9 +195,12 @@ export default function AvatarCustomiserCard({
               <Box
                 role="button"
                 aria-label={`Preview ${v.label}`}
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  toast(`Playing a preview of ${v.label}…`);
+                  const result = await preview(v);
+                  if (result === 'unsupported') {
+                    toast("Voice preview isn't supported in this browser.");
+                  }
                 }}
                 sx={{
                   display: 'flex',
@@ -205,14 +210,15 @@ export default function AvatarCustomiserCard({
                   py: 0.5,
                   borderRadius: 999,
                   cursor: 'pointer',
-                  color: PALETTE.violetLight,
-                  border: `1px solid ${alpha(PALETTE.violet, 0.4)}`,
-                  '&:hover': { bgcolor: alpha(PALETTE.violet, 0.12) },
+                  color: playingId === v.id ? '#fff' : PALETTE.violetLight,
+                  bgcolor: playingId === v.id ? alpha(PALETTE.violet, 0.85) : 'transparent',
+                  border: `1px solid ${alpha(PALETTE.violet, playingId === v.id ? 0.85 : 0.4)}`,
+                  '&:hover': { bgcolor: alpha(PALETTE.violet, playingId === v.id ? 0.85 : 0.12) },
                 }}
               >
-                <Iconify icon="solar:play-bold" width={14} />
+                <Iconify icon={playingId === v.id ? 'solar:stop-bold' : 'solar:play-bold'} width={14} />
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                  Preview
+                  {playingId === v.id ? 'Playing' : 'Preview'}
                 </Typography>
               </Box>
             </Stack>

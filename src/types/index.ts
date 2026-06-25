@@ -55,6 +55,20 @@ export interface ConversationEntry {
   timestamp: number;
 }
 
+// A single thread in the History list. The prototype only ships a transcript
+// for the first (most recent) conversation; the rest are visual placeholders
+// flagged with `locked`, so only the unlocked one can be opened.
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  preview: string; // snippet of the most recent message
+  timestamp: number; // last activity, used for the relative-time label
+  messageCount: number;
+  icon: string; // iconify name representing the thread's topic
+  accent: string; // hex tint for the icon tile
+  locked?: boolean;
+}
+
 // ---- catalogue option shapes (used by onboarding & settings) ----
 
 export interface AvatarAppearance {
@@ -68,6 +82,12 @@ export interface VoiceOption {
   id: string;
   label: string;
   description: string;
+  // --- Web Speech API preview config ---
+  lang: string; // BCP-47 tag used to match a system voice (e.g. 'en-US')
+  systemVoiceNames: string[]; // preferred OS voice names, best match first
+  pitch: number; // 0–2; keeps voices distinct when few are installed
+  rate: number; // 0.1–10; speaking speed
+  sample: string; // line spoken when the user previews this voice
 }
 
 export interface PersonalityOption {

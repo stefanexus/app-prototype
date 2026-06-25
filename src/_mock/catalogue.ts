@@ -39,13 +39,53 @@ export const PERSONALITY_OPTIONS: PersonalityOption[] = [
   },
 ];
 
-// In the real app these come from window.speechSynthesis.getVoices().
-// For the visual prototype we present a representative static list.
+// These map to real system voices exposed by window.speechSynthesis.
+// `systemVoiceNames` lists the closest matches per platform (best first);
+// the preview hook falls back to language + pitch/rate so each option
+// still sounds distinct on machines with a limited voice set.
 export const VOICE_OPTIONS: VoiceOption[] = [
-  { id: 'samantha', label: 'Samantha', description: 'Warm · English (US) · Female' },
-  { id: 'daniel', label: 'Daniel', description: 'Calm · English (UK) · Male' },
-  { id: 'aria', label: 'Aria', description: 'Bright · English (US) · Female' },
-  { id: 'rishi', label: 'Rishi', description: 'Smooth · English (IN) · Male' },
+  {
+    id: 'samantha',
+    label: 'Samantha',
+    description: 'Warm · English (US) · Female',
+    lang: 'en-US',
+    systemVoiceNames: ['Samantha', 'Microsoft Zira', 'Google US English', 'Allison'],
+    pitch: 1.05,
+    rate: 1,
+    sample: "Hi there! I'm Samantha. I'm really glad we're getting to know each other.",
+  },
+  {
+    id: 'daniel',
+    label: 'Daniel',
+    description: 'Calm · English (UK) · Male',
+    lang: 'en-GB',
+    systemVoiceNames: ['Daniel', 'Google UK English Male', 'Microsoft George', 'Arthur'],
+    pitch: 0.9,
+    rate: 0.95,
+    sample: "Hello, I'm Daniel. Take a breath — I'm here to help, calmly and clearly.",
+  },
+  {
+    id: 'aria',
+    label: 'Aria',
+    description: 'Bright · English (US) · Female',
+    lang: 'en-US',
+    // Aria is a Windows/Edge voice; on macOS we fall back to a real female
+    // en-US voice (never a novelty one), kept bright via the higher pitch.
+    systemVoiceNames: ['Aria', 'Microsoft Aria', 'Kathy', 'Victoria', 'Allison', 'Samantha'],
+    pitch: 1.2,
+    rate: 1.08,
+    sample: "Hey! I'm Aria. Ready when you are — let's make today a great one!",
+  },
+  {
+    id: 'rishi',
+    label: 'Rishi',
+    description: 'Smooth · English (IN) · Male',
+    lang: 'en-IN',
+    systemVoiceNames: ['Rishi', 'Microsoft Prabhat', 'Google हिन्दी', 'Google UK English Male'],
+    pitch: 0.95,
+    rate: 0.92,
+    sample: "Hello, I'm Rishi. It's a real pleasure to meet you. Shall we begin?",
+  },
 ];
 
 // ---- option lists for questionnaire fields ----

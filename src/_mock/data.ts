@@ -1,6 +1,7 @@
 import type {
   AvatarConfig,
   ConversationEntry,
+  ConversationSummary,
   UserProfile,
 } from '../types';
 
@@ -60,6 +61,56 @@ export const MOCK_CONVERSATION: ConversationEntry[] = [
   { id: 'm5', role: 'assistant', content: "You loved sci-fi thrillers last time — 'Arrival' fits your mood perfectly and it's a calm, thoughtful watch before bed.", timestamp: dayOffset(0, 20, 16) },
   { id: 'm6', role: 'user', content: "I've had a headache all afternoon, what should I take?", timestamp: dayOffset(1, 14, 5) },
   { id: 'm7', role: 'assistant', content: "For anything health-related like that, I'd recommend speaking to your doctor.", timestamp: dayOffset(1, 14, 5) },
+];
+
+// The most recent message in the sample transcript — drives the first card's
+// preview line, timestamp and count so the list stays in sync with the thread.
+const LATEST_ENTRY = MOCK_CONVERSATION.reduce((latest, entry) =>
+  entry.timestamp > latest.timestamp ? entry : latest
+);
+
+// Threads shown on the History list. Only the first is openable; the rest are
+// placeholders (locked) to suggest a richer history without real transcripts.
+export const MOCK_CONVERSATIONS: ConversationSummary[] = [
+  {
+    id: 'conv-1',
+    title: 'Daily check-in',
+    preview: LATEST_ENTRY.content,
+    timestamp: LATEST_ENTRY.timestamp,
+    messageCount: MOCK_CONVERSATION.length,
+    icon: 'solar:chat-round-line-bold-duotone',
+    accent: '#7C3AED',
+  },
+  {
+    id: 'conv-2',
+    title: 'Weekend in the Peak District',
+    preview: "I've found three dog-friendly trails near Edale — want the easy one?",
+    timestamp: dayOffset(3, 19, 12),
+    messageCount: 14,
+    icon: 'solar:map-point-wave-bold-duotone',
+    accent: '#22D3EE',
+    locked: true,
+  },
+  {
+    id: 'conv-3',
+    title: 'Strength training plan',
+    preview: "Here's a 3-day split that fits around your 09:00 starts.",
+    timestamp: dayOffset(5, 7, 40),
+    messageCount: 9,
+    icon: 'solar:dumbbell-bold-duotone',
+    accent: '#EC4899',
+    locked: true,
+  },
+  {
+    id: 'conv-4',
+    title: 'Trimming subscriptions',
+    preview: 'You could save about £18/month by pausing two of these.',
+    timestamp: dayOffset(8, 21, 5),
+    messageCount: 11,
+    icon: 'solar:wallet-money-bold-duotone',
+    accent: '#FBBF24',
+    locked: true,
+  },
 ];
 
 // Sample nudges for the Home proactive card (Suggestion Engine preview).

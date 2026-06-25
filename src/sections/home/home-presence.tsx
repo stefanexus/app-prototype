@@ -11,10 +11,10 @@ import { GRADIENTS, PALETTE } from '../../theme';
 import type { AvatarState } from '../../types';
 
 // ----------------------------------------------------------------------
-// Avatar presence — the hero of the Home screen. The orb itself IS the
-// microphone: tap it to start/stop listening (PRD stories 4-6). Below it,
-// a compact "speech bubble" carries the avatar's voice — a proactive
-// nudge when idle, "I'm listening…" while active.
+// Avatar presence — the hero of the Home screen. Tap the orb once and the
+// avatar speaks aloud (a quick way to hear its voice); tap again to stop.
+// Below it, a compact "speech bubble" carries the avatar's voice — a
+// proactive nudge when idle, the spoken line while speaking.
 // ----------------------------------------------------------------------
 
 type Nudge = {
@@ -29,7 +29,10 @@ type Props = {
   appearanceId: string;
   avatarName: string;
   nudge: Nudge;
-  listening: boolean;
+  /** Avatar is voicing a line — shows it in the bubble + animates the face. */
+  speaking: boolean;
+  /** The line the avatar is speaking aloud. */
+  spokenText: string;
   onToggle: () => void;
   /** Orb diameter — driven by viewport height so the screen always fits. */
   orbSize: number;
@@ -42,7 +45,8 @@ export default function HomePresence({
   appearanceId,
   avatarName,
   nudge,
-  listening,
+  speaking,
+  spokenText,
   onToggle,
   orbSize,
 }: Props) {
@@ -66,16 +70,16 @@ export default function HomePresence({
         width: '100%',
       }}
     >
-      {/* The avatar is the tap-to-talk control. It zooms in while
-          listening; idle breathing + the listening ring live in Avatar. */}
+      {/* The avatar is the tap-to-speak control. A gentle pulse while it
+          speaks; idle breathing lives in Avatar. */}
       <MotionBox
         role="button"
         tabIndex={0}
         onClick={onToggle}
         onKeyDown={handleKeyDown}
-        aria-label={listening ? 'Stop listening' : 'Tap to talk'}
+        aria-label={speaking ? 'Stop speaking' : 'Tap to hear me'}
         whileTap={{ scale: 0.94 }}
-        animate={{ scale: listening ? 1.75 : 1 }}
+        animate={{ scale: speaking ? 1.06 : 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
         sx={{
           cursor: 'pointer',
@@ -91,12 +95,12 @@ export default function HomePresence({
       {/* control hint */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
         <Iconify
-          icon="solar:microphone-3-bold-duotone"
+          icon={speaking ? 'solar:soundwave-bold-duotone' : 'solar:play-bold'}
           width={16}
-          sx={{ color: listening ? PALETTE.cyan : PALETTE.textSecondary }}
+          sx={{ color: speaking ? PALETTE.cyan : PALETTE.textSecondary }}
         />
         <Typography variant="body2" sx={{ color: PALETTE.textSecondary, fontWeight: 600 }}>
-          Tap to talk
+          {speaking ? 'Tap to stop' : 'Tap to hear me'}
         </Typography>
       </Box>
 
@@ -143,21 +147,24 @@ export default function HomePresence({
 
           <AnimatePresence mode="wait">
             <MotionBox
-              key={listening ? 'listening' : 'nudge'}
+              key={speaking ? 'speaking' : 'nudge'}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
             >
-              {listening ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {speaking ? (
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                   <Iconify
                     icon="solar:soundwave-bold-duotone"
                     width={20}
-                    sx={{ color: PALETTE.cyan }}
+                    sx={{ color: PALETTE.violetLight, flexShrink: 0, mt: '2px' }}
                   />
-                  <Typography variant="body2" sx={{ color: PALETTE.text, fontWeight: 600 }}>
-                    I'm listening…
+                  <Typography
+                    variant="body2"
+                    sx={{ color: PALETTE.text, fontWeight: 600, lineHeight: 1.4 }}
+                  >
+                    {spokenText}
                   </Typography>
                 </Box>
               ) : (

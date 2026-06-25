@@ -17,6 +17,7 @@ import {
 } from '../../../_mock';
 import Avatar from '../../../components/avatar';
 import Iconify from '../../../components/iconify';
+import { useVoicePreview } from '../../../hooks/use-voice-preview';
 import { PALETTE, GRADIENTS } from '../../../theme';
 import type { OnboardingFormValues } from '../form-schema';
 
@@ -35,6 +36,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function StepAvatar() {
   const { control } = useFormContext<OnboardingFormValues>();
+  const { playingId, preview } = useVoicePreview();
 
   return (
     <Stack spacing={3.5}>
@@ -201,15 +203,29 @@ export default function StepAvatar() {
                     </Box>
                     <Button
                       size="small"
-                      variant="outlined"
-                      onClick={(e) => {
+                      variant={playingId === voice.id ? 'contained' : 'outlined'}
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        toast(`Playing ${voice.label}…`);
+                        const result = await preview(voice);
+                        if (result === 'unsupported') {
+                          toast("Voice preview isn't supported in this browser.");
+                        }
                       }}
-                      sx={{ flexShrink: 0, py: 0.5, px: 1.5, color: PALETTE.text, borderColor: PALETTE.border }}
-                      startIcon={<Iconify icon="solar:play-bold" width={14} />}
+                      sx={{
+                        flexShrink: 0,
+                        py: 0.5,
+                        px: 1.5,
+                        color: playingId === voice.id ? '#fff' : PALETTE.text,
+                        borderColor: PALETTE.border,
+                      }}
+                      startIcon={
+                        <Iconify
+                          icon={playingId === voice.id ? 'solar:stop-bold' : 'solar:play-bold'}
+                          width={14}
+                        />
+                      }
                     >
-                      Preview
+                      {playingId === voice.id ? 'Playing' : 'Preview'}
                     </Button>
                   </Box>
                 );

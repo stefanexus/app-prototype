@@ -24,8 +24,6 @@ export const onboardingSchema = z.object({
   // Step 2 — Identity
   name: z.string().trim().min(1, 'What should we call you?'),
   age: z.union([z.number().int().min(0).max(120), z.literal('')]),
-  location: z.string(),
-  timezone: z.string(),
 
   // Step 3 — Health & lifestyle
   activityLevel: z.enum(['sedentary', 'light', 'moderate', 'active']),
@@ -47,7 +45,7 @@ export type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 // Fields validated per step — used to gate the "Next" button.
 export const STEP_FIELDS: (keyof OnboardingFormValues)[][] = [
   ['avatarName', 'gender', 'appearanceId', 'voiceId', 'personalityTone'],
-  ['name', 'age', 'location', 'timezone'],
+  ['name', 'age'],
   ['activityLevel', 'dietaryRestrictions', 'fitnessGoals', 'wakeTime', 'sleepTime'],
   ['jobType', 'workingHours', 'stressLevel', 'hobbyTags', 'subscriptionTags'],
 ];

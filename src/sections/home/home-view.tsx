@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { toast } from 'sonner';
 
 import type { AvatarState } from '../../types';
 import { DEFAULT_AVATAR, MOCK_NUDGES } from '../../_mock';
+import { useSpeech } from '../../hooks/use-speech';
 
 import HomePresence from './home-presence';
 import HomeGlance from './home-glance';
@@ -23,9 +24,20 @@ import HomeQuickActions from './home-quick-actions';
 export default function HomeView() {
   const nudge = MOCK_NUDGES[0];
 
-  // Visual-only listening state. Toggles the orb between idle/listening.
-  const [listening, setListening] = useState(false);
-  const orbState: AvatarState = listening ? 'listening' : 'idle';
+  // `speaking` is driven by real text-to-speech so the avatar's reply can
+  // actually be heard. One tap on the orb plays a line; tap again to stop.
+  const { speaking, speak, stop } = useSpeech();
+  const orbState: AvatarState = speaking ? 'speaking' : 'idle';
+
+  // Rotating one-tap "test the voice" lines so repeated taps feel alive.
+  const testLines = [
+    `Hi! I'm ${DEFAULT_AVATAR.name}. It's lovely to finally meet you.`,
+    `Tap me any time and I'll speak — this is my voice.`,
+    `Hello again! How can I help you today?`,
+    `I'm right here whenever you need me.`,
+  ];
+  const lineIndex = useRef(0);
+  const [spokenText, setSpokenText] = useState(testLines[0]);
 
   // Orb diameter flexes with viewport height so everything fits with no
   // scroll, even on short devices (the orb gives before anything clips).
@@ -33,18 +45,18 @@ export default function HomeView() {
   const short = useMediaQuery('(max-height: 680px)');
   const orbSize = short ? 104 : tall ? 140 : 124;
 
-  const handleToggleListening = () => {
-    setListening((prev) => {
-      const next = !prev;
-      if (next) {
-        toast(`${DEFAULT_AVATAR.name} is listening…`, {
-          description: 'Speak naturally — tap again to stop.',
-        });
-      } else {
-        toast('Stopped listening.');
-      }
-      return next;
-    });
+  const handleTap = () => {
+    // Tap while speaking → interrupt it.
+    if (speaking) {
+      stop();
+      return;
+    }
+    // Tap while idle → speak the next line aloud (one-tap voice test). The
+    // line shows in the avatar's own speech bubble, so no toast needed.
+    const line = testLines[lineIndex.current % testLines.length];
+    lineIndex.current += 1;
+    setSpokenText(line);
+    speak(line, DEFAULT_AVATAR.voiceId);
   };
 
   const handleQuickAction = (label: string) => {
@@ -71,8 +83,9 @@ export default function HomeView() {
           appearanceId={DEFAULT_AVATAR.appearanceId}
           avatarName={DEFAULT_AVATAR.name}
           nudge={nudge}
-          listening={listening}
-          onToggle={handleToggleListening}
+          speaking={speaking}
+          spokenText={spokenText}
+          onToggle={handleTap}
           orbSize={orbSize}
         />
       </Box>
@@ -86,8 +99,8 @@ export default function HomeView() {
           flexDirection: 'column',
           gap: 2,
           pt: 1.5,
-          opacity: listening ? 0.4 : 1,
-          pointerEvents: listening ? 'none' : 'auto',
+          opacity: speaking ? 0.4 : 1,
+          pointerEvents: speaking ? 'none' : 'auto',
           transition: 'opacity 0.3s ease',
         }}
       >
